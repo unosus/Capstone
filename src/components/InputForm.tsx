@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
-import { motion } from 'motion/react';
-import { Cpu, DollarSign, Target, ChevronRight, Check } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Cpu, DollarSign, Target, ChevronRight, Check, ArrowLeft } from 'lucide-react';
 
 // ✅ 백엔드 RequestDTO의 usage 값과 일치하도록 대문자로 수정
 const usageOptions = [
@@ -39,8 +38,8 @@ function formatKoreanBudget(value: number): string {
   return parts.join(' ') + '원';
 }
 
-export function InputForm() {
-  const navigate = useNavigate();
+// onBack 프롭스 추가
+export function InputForm({ onComplete, onBack }: { onComplete: () => void; onBack: () => void }) {
   const [budget, setBudget] = useState('');
   const [purpose, setPurpose] = useState('');
   const [brands, setBrands] = useState<Record<string, boolean>>({});
@@ -48,14 +47,14 @@ export function InputForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // ✅ brands를 배열로 변환하여 저장
+    // 데이터를 저장하고 App.tsx의 상태를 변경하도록 알림
     sessionStorage.setItem('pcBuildData', JSON.stringify({
       budget,
       purpose,
       brands: Object.keys(brands).filter(key => brands[key])
     }));
 
-    navigate('/loading');
+    onComplete(); // App.tsx의 handleInputComplete 실행
   };
 
   const toggleBrand = (brandId: string) => {
@@ -65,14 +64,25 @@ export function InputForm() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
-            <Cpu className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl">PC Builder</h1>
-            <p className="text-sm text-gray-600">맞춤형 PC 조합 추천</p>
+      <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={onBack} 
+              className="p-2 hover:bg-slate-100 rounded-full transition-all active:scale-95"
+              aria-label="뒤로 가기"
+            >
+              <ArrowLeft className="w-6 h-6 text-slate-600" />
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
+                <Cpu className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-slate-900">BuildMate</h1>
+                <p className="text-xs text-gray-500">맞춤형 PC 조합 추천</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -84,7 +94,7 @@ export function InputForm() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8 text-center"
         >
-          <h2 className="text-3xl md:text-4xl mb-3">
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">
             어떤 PC를 찾고 계신가요?
           </h2>
           <p className="text-gray-600 text-lg">
@@ -107,7 +117,7 @@ export function InputForm() {
                   <DollarSign className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="text-xl">예산</h3>
+                  <h3 className="text-xl font-bold text-slate-900">예산</h3>
                   <p className="text-sm text-gray-600">총 예산을 입력해주세요</p>
                 </div>
               </div>
@@ -118,9 +128,9 @@ export function InputForm() {
                   onChange={(e) => setBudget(e.target.value)}
                   placeholder="1000000"
                   required
-                  className="w-full px-5 py-4 pr-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-lg transition-all"
+                  className="w-full px-5 py-4 pr-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-lg transition-all font-medium"
                 />
-                <span className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-500">원</span>
+                <span className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-500 font-bold">원</span>
               </div>
               {budget && parseInt(budget) > 0 && (
                 <motion.p
@@ -128,7 +138,7 @@ export function InputForm() {
                   animate={{ opacity: 1, y: 0 }}
                   className="mt-3 text-sm text-gray-600"
                 >
-                  약 <span className="text-blue-600 font-medium">{formatKoreanBudget(parseInt(budget))}</span> 예산으로 추천해드립니다
+                  약 <span className="text-blue-600 font-bold">{formatKoreanBudget(parseInt(budget))}</span> 예산으로 추천해드립니다
                 </motion.p>
               )}
             </label>
@@ -141,7 +151,7 @@ export function InputForm() {
                 <Target className="w-5 h-5 text-indigo-600" />
               </div>
               <div>
-                <h3 className="text-xl">사용 목적</h3>
+                <h3 className="text-xl font-bold text-slate-900">사용 목적</h3>
                 <p className="text-sm text-gray-600">주요 사용 용도를 선택해주세요</p>
               </div>
             </div>
@@ -160,17 +170,17 @@ export function InputForm() {
                   <div className="flex items-start gap-3">
                     <span className="text-2xl">{option.emoji}</span>
                     <div className="flex-1">
-                      <p className={`font-medium mb-1 ${purpose === option.value ? 'text-blue-600' : 'text-gray-900'}`}>
+                      <p className={`font-bold mb-1 ${purpose === option.value ? 'text-blue-600' : 'text-gray-900'}`}>
                         {option.label}
                       </p>
-                      <p className="text-xs text-gray-600">{option.desc}</p>
+                      <p className="text-xs text-gray-600 leading-tight">{option.desc}</p>
                     </div>
                   </div>
                   {purpose === option.value && (
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="absolute top-3 right-3 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center"
+                      className="absolute top-3 right-3 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center shadow-sm"
                     >
                       <Check className="w-4 h-4 text-white" />
                     </motion.div>
@@ -183,7 +193,7 @@ export function InputForm() {
           {/* Brand Preferences Section */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
             <div className="mb-6">
-              <h3 className="text-xl mb-1">선호 브랜드</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-1">선호 브랜드</h3>
               <p className="text-sm text-gray-600">선호하는 브랜드를 선택해주세요 (선택사항)</p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -192,7 +202,7 @@ export function InputForm() {
                   key={brand.id}
                   type="button"
                   onClick={() => toggleBrand(brand.id)}
-                  className={`px-4 py-2.5 rounded-lg border-2 transition-all ${
+                  className={`px-4 py-2.5 rounded-lg border-2 font-medium transition-all ${
                     brands[brand.id]
                       ? 'bg-blue-600 border-blue-600 text-white shadow-md'
                       : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:shadow-sm'
@@ -210,7 +220,7 @@ export function InputForm() {
             disabled={!budget || !purpose}
             whileHover={{ scale: !budget || !purpose ? 1 : 1.02 }}
             whileTap={{ scale: !budget || !purpose ? 1 : 0.98 }}
-            className={`w-full py-5 rounded-xl text-lg font-medium transition-all shadow-lg flex items-center justify-center gap-2 ${
+            className={`w-full py-5 rounded-xl text-lg font-bold transition-all shadow-lg flex items-center justify-center gap-2 ${
               budget && purpose
                 ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl'
                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
@@ -230,7 +240,7 @@ export function InputForm() {
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm border border-gray-200">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-sm text-gray-600">AI 기반 실시간 가격 비교</span>
+            <span className="text-sm text-gray-600 font-medium">매일 최신 가격 업데이트</span>
           </div>
         </motion.div>
       </div>

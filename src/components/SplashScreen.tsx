@@ -4,16 +4,6 @@ import { motion } from 'motion/react';
 import { Cpu, Sparkles } from 'lucide-react';
 
 export function SplashScreen() {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      navigate('/home');
-    }, 3000); // 밀리초 단위 (3000 = 3초)
-
-    return () => clearTimeout(timer);
-  }, [navigate]);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 flex items-center justify-center overflow-hidden">
       <div className="relative">
@@ -52,7 +42,7 @@ export function SplashScreen() {
             transition={{ delay: 0.5 }}
             className="text-5xl text-white mb-3"
           >
-            PC Builder
+            Build Mate
           </motion.h1>
 
           <motion.p
@@ -61,7 +51,7 @@ export function SplashScreen() {
             transition={{ delay: 0.7 }}
             className="text-xl text-blue-100 mb-8"
           >
-            나만의 완벽한 PC를 찾아보세요
+            나에게 알맞는 부품을 찾아보세요
           </motion.p>
 
           <motion.div
@@ -71,7 +61,7 @@ export function SplashScreen() {
             className="flex items-center justify-center gap-2 text-white"
           >
             <Sparkles className="w-5 h-5 animate-pulse" />
-            <span className="text-sm">AI 기반 맞춤 추천</span>
+            <span className="text-sm">사용자 맞춤 추천</span>
           </motion.div>
         </motion.div>
 
