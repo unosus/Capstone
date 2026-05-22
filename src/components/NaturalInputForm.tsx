@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Send, Sparkles } from 'lucide-react';
+import API_BASE from "../utils/api";
 
 interface NaturalInputFormProps {
   onComplete: () => void;
@@ -16,7 +17,7 @@ export function NaturalInputForm({ onComplete }: NaturalInputFormProps) {
 
     try {
       // 백엔드 호출
-      const res = await axios.post("http://localhost:8080/api/estimates/natural-language", {
+      const res = await axios.post(`${API_BASE}/api/estimates/natural-language`, {
         userInput: input
       });
       

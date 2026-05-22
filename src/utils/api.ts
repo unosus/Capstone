@@ -1,6 +1,9 @@
 import type { BuildInput } from '../types/pc';
 
-const API_BASE = 'http://localhost:8080';
+// @ts-ignore
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+
+export default API_BASE;
 
 export interface PartDetail {
   category: string;
