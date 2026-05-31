@@ -1,20 +1,50 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { InputForm } from '../components/InputForm'; // 기존 컴포넌트
-import { NaturalInputForm } from '../components/NaturalInputForm'; // 신규 컴포넌트
+import { Cpu, ArrowLeft } from 'lucide-react'; // 아이콘 추가
+import { InputForm } from '../components/InputForm';
+import { NaturalInputForm } from '../components/NaturalInputForm';
 
 export function InputPage() {
   const [mode, setMode] = useState<'manual' | 'ai'>('manual');
   const navigate = useNavigate();
 
   const handleComplete = () => {
-    // 분석이 완료되면 결과 페이지로 이동
     navigate('/results');
   };
 
+  // 공통 뒤로가기 핸들러
+  const handleBack = () => {
+    navigate(-1); // 이전 페이지로 이동
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* 🚀 공통 상위 헤더 (InputForm에서 이관) */}
+      <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={handleBack} 
+              className="p-2 hover:bg-slate-100 rounded-full transition-all active:scale-95"
+              aria-label="뒤로 가기"
+            >
+              <ArrowLeft className="w-6 h-6 text-slate-600" />
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
+                <Cpu className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-slate-900">BuildMate</h1>
+                <p className="text-xs text-gray-500">맞춤형 PC 조합 추천</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Container */}
+      <div className="max-w-4xl mx-auto px-4 py-12">
         <div className="text-center mb-10">
           <h2 className="text-3xl font-bold text-slate-900 mb-2">나만의 맞춤 PC 견적</h2>
           <p className="text-slate-500">원하는 방식을 선택하여 견적을 시작해보세요.</p>
@@ -25,7 +55,9 @@ export function InputPage() {
           <button
             onClick={() => setMode('manual')}
             className={`px-6 py-2 rounded-full font-medium transition-all ${
-              mode === 'manual' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-600 hover:bg-slate-100'
+              mode === 'manual' 
+                ? 'bg-blue-600 text-white shadow-lg' 
+                : 'bg-white text-slate-600 hover:bg-slate-100'
             }`}
           >
             직접 선택하기
@@ -33,14 +65,16 @@ export function InputPage() {
           <button
             onClick={() => setMode('ai')}
             className={`px-6 py-2 rounded-full font-medium transition-all ${
-              mode === 'ai' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white text-slate-600 hover:bg-slate-100'
+              mode === 'ai' 
+                ? 'bg-indigo-600 text-white shadow-lg' 
+                : 'bg-white text-slate-600 hover:bg-slate-100'
             }`}
           >
             AI에게 말하기 (신규)
           </button>
         </div>
 
-        {/* 선택된 모드에 따라 컴포넌트 렌더링 */}
+        {/* 선택된 모드에 따라 컴포넌트 렌더링 (onBack 프롭스 제거) */}
         <div className="transition-all duration-500">
           {mode === 'manual' ? (
             <InputForm onComplete={handleComplete} />

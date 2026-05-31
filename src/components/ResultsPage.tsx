@@ -140,8 +140,9 @@ export function ResultsPage({ onRestart }: ResultsPageProps) {
       });
   }, [onRestart]);
 
-  const fetchAiAnalysis = async (selectedRec: Recommendation) => {
+const fetchAiAnalysis = async (selectedRec: Recommendation) => {
     setAiLoading(true);
+    setAiAnalysis(null); // 🚀 초기화 추가
 
     try {
       console.log("AI 분석 요청:", selectedRec.parts);
@@ -152,13 +153,19 @@ export function ResultsPage({ onRestart }: ResultsPageProps) {
 
       console.log("AI 분석 응답:", res.data);
 
+      // 🚀 백엔드가 200 성공을 보냈지만 데이터가 비어있거나 올바르지 않은 구조일 때 방어 로직 추가
+      if (!res.data || !res.data.pros || !res.data.cons || res.data.pros.length === 0) {
+        throw new Error("Backend returned empty or invalid AI data");
+      }
+
       setAiAnalysis(res.data);
     } catch (err) {
-      console.error("AI 분석 API 오류:", err);
+      console.error("AI 분석 API 오류 발생 (예외 핸들러 작동):", err);
 
+      // 백엔드가 터지거나 빈 값을 주면 이 기본 문구가 안전하게 화면에 나옵니다.
       setAiAnalysis({
-        pros: ["성능 밸런스가 좋은 조합입니다."],
-        cons: ["AI 분석 리포트를 불러오는 중 오류가 발생했습니다."]
+        pros: ["추천된 부품의 성능 매칭 연산이 완료되었습니다."],
+        cons: ["서버 통신 지연으로 인해 상세 AI 리포트를 로드하지 못했습니다. 잠시 후 다시 시도해주세요."]
       });
     } finally {
       setAiLoading(false);
