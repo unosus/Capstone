@@ -36,7 +36,6 @@ function formatKoreanBudget(value: number): string {
   return parts.join(' ') + '원';
 }
 
-// 🚀 구조조정: onBack 제거 및 불필요한 레이아웃 래퍼 제거
 export function InputForm({ onComplete }: { onComplete: () => void }) {
   const [budget, setBudget] = useState('');
   const [purpose, setPurpose] = useState('');
@@ -59,7 +58,6 @@ export function InputForm({ onComplete }: { onComplete: () => void }) {
   };
 
   return (
-    // 상위에서 배경과 패딩을 감싸므로 여기서는 max-w만 유지합니다.
     <div className="max-w-5xl mx-auto">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -212,7 +210,7 @@ export function InputForm({ onComplete }: { onComplete: () => void }) {
       >
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm border border-gray-200">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-          <span className="text-sm text-gray-600 font-medium">매일 최신 가격 업데이트</span>
+          <span className="text-sm text-gray-600 font-medium">매일 최신 정보 업데이트</span>
         </div>
       </motion.div>
     </div>

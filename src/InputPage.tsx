@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Cpu, ArrowLeft } from 'lucide-react'; // 아이콘 추가
+import { Cpu, ArrowLeft, Home } from 'lucide-react';
 import { InputForm } from '../components/InputForm';
 import { NaturalInputForm } from '../components/NaturalInputForm';
 
@@ -14,14 +14,21 @@ export function InputPage() {
 
   // 공통 뒤로가기 핸들러
   const handleBack = () => {
-    navigate(-1); // 이전 페이지로 이동
+    navigate(-1);
+  };
+
+  // 공통 메인 페이지(홈) 이동 핸들러
+  const handleHome = () => {
+    navigate('/'); 
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* 🚀 공통 상위 헤더 (InputForm에서 이관) */}
+      {/* 공통 상위 헤더 */}
       <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+          
+          {/* 왼쪽: 뒤로가기 및 로고 영역 */}
           <div className="flex items-center gap-4">
             <button 
               onClick={handleBack} 
@@ -30,16 +37,31 @@ export function InputPage() {
             >
               <ArrowLeft className="w-6 h-6 text-slate-600" />
             </button>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
+            <div 
+              onClick={handleHome}
+              className="flex items-center gap-3 cursor-pointer group select-none"
+              title="메인 페이지로 이동"
+            >
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
                 <Cpu className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-slate-900">BuildMate</h1>
+                <h1 className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">BuildMate</h1>
                 <p className="text-xs text-gray-500">맞춤형 PC 조합 추천</p>
               </div>
             </div>
           </div>
+          <div>
+            <button
+              onClick={handleHome}
+              className="p-2.5 hover:bg-slate-100 text-slate-600 hover:text-blue-600 rounded-full transition-all active:scale-95 flex items-center gap-1"
+              aria-label="메인 페이지로 이동"
+              title="메인 페이지로 이동"
+            >
+              <Home className="w-5 h-5" />
+            </button>
+          </div>
+
         </div>
       </div>
 
@@ -70,11 +92,11 @@ export function InputPage() {
                 : 'bg-white text-slate-600 hover:bg-slate-100'
             }`}
           >
-            AI에게 말하기 (신규)
+            AI에게 말하기
           </button>
         </div>
 
-        {/* 선택된 모드에 따라 컴포넌트 렌더링 (onBack 프롭스 제거) */}
+        {/* 선택된 모드에 따라 컴포넌트 렌더링 */}
         <div className="transition-all duration-500">
           {mode === 'manual' ? (
             <InputForm onComplete={handleComplete} />

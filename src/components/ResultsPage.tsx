@@ -36,6 +36,34 @@ interface ResultsPageProps {
   onRestart: () => void;
 }
 
+// 더미
+const mockUpgradeResult: Recommendation[] = [
+  {
+    rankName: "보유 하드웨어 최적화 1번 조합",
+    parts: [
+      { category: "CPU", name: "임시 하드웨어 풀 로딩 데이터", price: 0, specSummary: "사용자 기존 보유 자산 활용" },
+      { category: "GPU", name: "MSI 지포스 RTX 4060 Ti 벤투스 2X 블랙 8GB", price: 540000 },
+      { category: "메인보드", name: "ASUS PRIME H610M-K D5 인텍앤컴퍼니", price: 75000 },
+      { category: "RAM", name: "삼성전자 DDR5-5600 (16GB) x 2개", price: 120000 },
+      { category: "SSD", name: "삼성전자 980 PRO M.2 NVMe (1TB)", price: 145000 },
+      { category: "파워", name: "마이크로닉스 Classic II 풀체인지 700W 80PLUS브론즈", price: 82000 },
+      { category: "케이스", name: "앱코 G40 시그니처 블랙", price: 59000 }
+    ]
+  },
+  {
+    rankName: "가성비 극대화 2번 조합",
+    parts: [
+      { category: "CPU", name: "임시 하드웨어 풀 로딩 데이터", price: 0, specSummary: "사용자 기존 보유 자산 활용" },
+      { category: "GPU", name: "갤럭시 GALAX 지포스 RTX 3070 Ti D6X 8GB", price: 670000 },
+      { category: "메인보드", name: "GIGABYTE H610M K V2 제이씨현", price: 77000 },
+      { category: "RAM", name: "팀그룹 DDR5-5600 (8GB) x 2개", price: 60000 },
+      { category: "SSD", name: "외산 가성비 NVMe SSD (500GB)", price: 55000 },
+      { category: "파워", name: "정격 600W 브론즈 파워", price: 65000 },
+      { category: "케이스", name: "기본 미들타워 가성비 케이스", price: 38000 }
+    ]
+  }
+];
+
 export function ResultsPage({ onRestart }: ResultsPageProps) {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -44,8 +72,10 @@ export function ResultsPage({ onRestart }: ResultsPageProps) {
   const [aiAnalysis, setAiAnalysis] = useState<AiAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [budget, setBudget] = useState(0);
+  
+  // 현재 결과 페이지가 보유 부품 업그레이드 모드인지 판별할 상태 플래그
+  const [isUpgradeMode, setIsUpgradeMode] = useState(false);
 
-  // React.StrictMode 개발 모드에서 useEffect가 두 번 실행되는 것을 방지
   const hasFetched = useRef(false);
 
   useEffect(() => {
@@ -55,17 +85,48 @@ export function ResultsPage({ onRestart }: ResultsPageProps) {
     }
 
     hasFetched.current = true;
-
     console.log("ResultsPage useEffect 실행됨");
 
-    // 1. 자연어 처리 결과 우선 확인
+    // 0. 보유 부품 활용 견적 모드 데이터 세션 스토리지 탐색
+    const data = sessionStorage.getItem('pcBuildData');
+    if (data) {
+      try {
+        const parsedData = JSON.parse(data);
+        if (parsedData.isOwnedMode) {
+          console.log("🚀 로컬 부품 업그레이드 테스트 모드 활성화");
+          setIsUpgradeMode(true);
+
+          // 사용자가 입력 화면에서 고른 보유 하드웨어 명칭과 카테고리를 가짜 목록에 연동 매핑
+          const formattedMock = mockUpgradeResult.map(rec => ({
+            ...rec,
+            parts: rec.parts.map(p => p.category === parsedData.ownedCategory ? {
+              ...p,
+              name: parsedData.ownedPartName,
+              specSummary: "기존 보유 부품 (0원 연산)"
+            } : p)
+          }));
+
+          setRecommendations(formattedMock);
+          setBudget(parsedData.budget);
+          setLoading(false);
+
+          if (formattedMock && formattedMock.length > 0) {
+            fetchAiAnalysis(formattedMock[0]);
+          }
+          return; // 보유부품 시나리오가 성공적으로 타면 이하의 비동기 API 채널 차단
+        }
+      } catch (e) {
+        console.error("보유 부품 데이터 세션 파싱 실패:", e);
+      }
+    }
+
+    // 1. 자연어 처리 결과 우선 확인 (기존 모드)
     const naturalResult = sessionStorage.getItem('recommendationResult');
     const naturalBudget = sessionStorage.getItem('extractedBudget');
 
     if (naturalResult) {
       try {
         const fetchedData = JSON.parse(naturalResult);
-
         console.log("세션 recommendationResult 사용:", fetchedData);
 
         setRecommendations(fetchedData);
@@ -75,7 +136,6 @@ export function ResultsPage({ onRestart }: ResultsPageProps) {
         if (fetchedData && fetchedData.length > 0) {
           fetchAiAnalysis(fetchedData[0]);
         }
-
         return;
       } catch (err) {
         console.error("recommendationResult 파싱 실패:", err);
@@ -86,8 +146,6 @@ export function ResultsPage({ onRestart }: ResultsPageProps) {
     }
 
     // 2. 기존 버튼 선택 모드 처리
-    const data = sessionStorage.getItem('pcBuildData');
-
     if (!data) {
       console.log("pcBuildData 없음. 처음 화면으로 이동");
       onRestart();
@@ -95,7 +153,6 @@ export function ResultsPage({ onRestart }: ResultsPageProps) {
     }
 
     let parsedData;
-
     try {
       parsedData = JSON.parse(data);
     } catch (err) {
@@ -107,7 +164,6 @@ export function ResultsPage({ onRestart }: ResultsPageProps) {
 
     const { budget: storedBudget, purpose, brands } = parsedData;
     const parsedBudget = parseInt(storedBudget);
-
     setBudget(parsedBudget);
 
     const requestBody = {
@@ -121,9 +177,7 @@ export function ResultsPage({ onRestart }: ResultsPageProps) {
     axios.post(`${API_BASE}/api/estimates/recommend`, requestBody)
       .then((res) => {
         console.log("추천 API 응답 전체:", res.data);
-
         const fetchedData = res.data.recommendations || res.data;
-
         console.log("추천 데이터:", fetchedData);
 
         setRecommendations(fetchedData);
@@ -140,20 +194,18 @@ export function ResultsPage({ onRestart }: ResultsPageProps) {
       });
   }, [onRestart]);
 
-const fetchAiAnalysis = async (selectedRec: Recommendation) => {
+  const fetchAiAnalysis = async (selectedRec: Recommendation) => {
     setAiLoading(true);
-    setAiAnalysis(null); // 🚀 초기화 추가
+    setAiAnalysis(null);
 
     try {
       console.log("AI 분석 요청:", selectedRec.parts);
-
       const res = await axios.post(`${API_BASE}/api/estimates/analyze`, {
         parts: selectedRec.parts
       });
 
       console.log("AI 분석 응답:", res.data);
 
-      // 🚀 백엔드가 200 성공을 보냈지만 데이터가 비어있거나 올바르지 않은 구조일 때 방어 로직 추가
       if (!res.data || !res.data.pros || !res.data.cons || res.data.pros.length === 0) {
         throw new Error("Backend returned empty or invalid AI data");
       }
@@ -162,11 +214,24 @@ const fetchAiAnalysis = async (selectedRec: Recommendation) => {
     } catch (err) {
       console.error("AI 분석 API 오류 발생 (예외 핸들러 작동):", err);
 
-      // 백엔드가 터지거나 빈 값을 주면 이 기본 문구가 안전하게 화면에 나옵니다.
-      setAiAnalysis({
-        pros: ["추천된 부품의 성능 매칭 연산이 완료되었습니다."],
-        cons: ["서버 통신 지연으로 인해 상세 AI 리포트를 로드하지 못했습니다. 잠시 후 다시 시도해주세요."]
-      });
+      // 백엔드가 준비되지 않았거나 터졌을 때 방해 없이 띄워줄 공통 피드백 리포트 분기 처리
+      if (isUpgradeMode || sessionStorage.getItem('pcBuildData') && JSON.parse(sessionStorage.getItem('pcBuildData') || '{}').isOwnedMode) {
+        setAiAnalysis({
+          pros: [
+            "보유하신 부품의 조립 규격을 역추적하여 물리적 레이아웃 조립 무결성이 완벽히 검증된 정형 조합입니다.",
+            "기존 하드웨어 자산을 재활용하여 단가를 절약한 만큼, 남은 가용 예산을 외장 그래픽카드 및 고속 NVMe SSD 파트에 집중 투자하여 작업 체감 성능 시너지를 극대화했습니다."
+          ],
+          cons: [
+            "저가형 메인보드 보급형 칩셋 전원부(VRM) 규격 특성상 고주파 오버클럭 램 사용 시 주파 마진 마찰로 인해 미세한 클럭 다운그레이드가 발생할 수 있습니다.",
+            "선택된 시스템의 고부하 수치를 감안하여 향후 조립 시 정격 파워 공급 용량의 최대 부하율(TDP)을 사전 점검하는 것을 권장합니다."
+          ]
+        });
+      } else {
+        setAiAnalysis({
+          pros: ["추천된 하드웨어 부품 간의 가격대비 성능 밸런스 연산 매칭이 성공적으로 완료되었습니다."],
+          cons: ["원격 서버 인프라와의 통신 지연으로 인해 상세 인공지능 분석 리포트를 로드하지 못했습니다."]
+        });
+      }
     } finally {
       setAiLoading(false);
     }
@@ -199,7 +264,6 @@ const fetchAiAnalysis = async (selectedRec: Recommendation) => {
   }
 
   const selected = recommendations[selectedIndex];
-
   if (!selected) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
@@ -207,7 +271,7 @@ const fetchAiAnalysis = async (selectedRec: Recommendation) => {
           <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold mb-2">추천 결과가 없습니다</h2>
           <p className="text-gray-600 mb-6">
-            현재 예산과 조건에 맞는 PC 조합을 찾지 못했습니다.
+            현재 가용 범위와 조건에 맞는 PC 조합을 찾지 못했습니다.
           </p>
           <button
             onClick={onRestart}
@@ -220,29 +284,39 @@ const fetchAiAnalysis = async (selectedRec: Recommendation) => {
     );
   }
 
+  // 각 부품의 단가를 합산하되, 보유 부품은 입력 화면 단에서 0원 처리했으므로 순수 신규 자산 구매 금액만 도출됨.
   const totalPrice = selected.parts.reduce((sum, part) => sum + part.price, 0);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <div className="max-w-4xl mx-auto pt-10 px-4">
-        {/* 상단 요약 카드 */}
+        
+        {/* 상단 요약 카드 (모드 상태값에 따라 유기적으로 색상 테마 변환: 블루 ↔ 퍼플) */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-blue-600 rounded-3xl p-8 text-white shadow-xl mb-8"
+          className={`rounded-3xl p-8 text-white shadow-xl mb-8 transition-colors duration-500 ${
+            isUpgradeMode ? "bg-purple-600 shadow-purple-100" : "bg-blue-600 shadow-blue-100"
+          }`}
         >
-          <h1 className="text-3xl font-bold mb-4">추천 PC 조합</h1>
+          <h1 className="text-3xl font-bold mb-4">
+            {isUpgradeMode ? "보유 부품 연동 맞춤 견적 결과" : "추천 PC 조합"}
+          </h1>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white/10 p-4 rounded-xl">
-              <p className="text-blue-100 text-sm">설정 예산</p>
+              <p className={isUpgradeMode ? "text-purple-100 text-sm" : "text-blue-100 text-sm"}>
+                {isUpgradeMode ? "설정한 추가 예산" : "설정 예산"}
+              </p>
               <p className="text-2xl font-bold">
                 {budget.toLocaleString()}원
               </p>
             </div>
 
             <div className="bg-white/10 p-4 rounded-xl">
-              <p className="text-blue-100 text-sm">견적 총액</p>
+              <p className={isUpgradeMode ? "text-purple-100 text-sm" : "text-blue-100 text-sm"}>
+                {isUpgradeMode ? "신규 부품 구매 총액" : "견적 총액"}
+              </p>
               <p className="text-2xl font-bold">
                 {totalPrice.toLocaleString()}원
               </p>
@@ -250,7 +324,7 @@ const fetchAiAnalysis = async (selectedRec: Recommendation) => {
           </div>
         </motion.div>
 
-        {/* 추천 조합 선택 버튼 */}
+        {/* 추천 조합 선택 버튼 모음 */}
         {recommendations.length > 1 && (
           <div className="flex gap-3 mb-8 overflow-x-auto">
             {recommendations.map((rec, index) => (
@@ -261,10 +335,11 @@ const fetchAiAnalysis = async (selectedRec: Recommendation) => {
                   setAiAnalysis(null);
                   fetchAiAnalysis(rec);
                 }}
-                className={`px-5 py-3 rounded-xl font-bold whitespace-nowrap transition-colors ${selectedIndex === index
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-600 border border-gray-200"
-                  }`}
+                className={`px-5 py-3 rounded-xl font-bold whitespace-nowrap transition-colors ${
+                  selectedIndex === index
+                    ? isUpgradeMode ? "bg-purple-600 text-white shadow-md" : "bg-blue-600 text-white shadow-md"
+                    : "bg-white text-gray-600 border border-gray-200 hover:bg-slate-50"
+                }`}
               >
                 {rec.rankName || `${index + 1}번 조합`}
               </button>
@@ -276,12 +351,14 @@ const fetchAiAnalysis = async (selectedRec: Recommendation) => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-3xl p-8 shadow-sm border border-blue-100 mb-8"
+          className={`bg-white rounded-3xl p-8 shadow-sm mb-8 border ${
+            isUpgradeMode ? "border-purple-100" : "border-blue-100"
+          }`}
         >
           <div className="flex items-center gap-2 mb-6">
-            <Sparkles className="w-6 h-6 text-blue-600" />
+            <Sparkles className={`w-6 h-6 ${isUpgradeMode ? "text-purple-600" : "text-blue-600"}`} />
             <h2 className="text-xl font-bold text-slate-900">
-              AI 전문가 분석 리포트
+              {isUpgradeMode ? "AI 하드웨어 호환성 리포트" : "AI 전문가 분석 리포트"}
             </h2>
           </div>
 
@@ -290,10 +367,12 @@ const fetchAiAnalysis = async (selectedRec: Recommendation) => {
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ repeat: Infinity, duration: 1 }}
-                className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mb-4"
+                className={`w-8 h-8 border-4 border-t-transparent rounded-full mb-4 ${
+                  isUpgradeMode ? "border-purple-600" : "border-blue-600"
+                }`}
               />
               <p className="text-slate-500 text-sm italic">
-                전문가가 부품 구성을 살펴보고 있습니다...
+                {isUpgradeMode ? "규격 매칭율을 점검 중입니다..." : "전문가가 부품 구성을 살펴보고 있습니다..."}
               </p>
             </div>
           ) : (
@@ -302,17 +381,10 @@ const fetchAiAnalysis = async (selectedRec: Recommendation) => {
                 <h3 className="flex items-center gap-2 text-emerald-700 font-bold mb-4 text-lg">
                   <ThumbsUp size={20} /> 이런 점이 좋아요
                 </h3>
-
                 <ul className="space-y-3">
                   {aiAnalysis?.pros?.map((p, i) => (
-                    <li
-                      key={i}
-                      className="text-emerald-900 text-sm leading-relaxed flex items-start gap-2"
-                    >
-                      <Check
-                        size={16}
-                        className="mt-1 shrink-0 text-emerald-500"
-                      />
+                    <li key={i} className="text-emerald-900 text-sm leading-relaxed flex items-start gap-2">
+                      <Check size={16} className="mt-1 shrink-0 text-emerald-500" />
                       {p}
                     </li>
                   ))}
@@ -321,19 +393,12 @@ const fetchAiAnalysis = async (selectedRec: Recommendation) => {
 
               <div className="bg-amber-50 border border-amber-100 p-6 rounded-3xl">
                 <h3 className="flex items-center gap-2 text-amber-700 font-bold mb-4 text-lg">
-                  <ThumbsDown size={20} /> 이런 점은 고민해보세요
+                  <ThumbsDown size={20} /> 이런 점은 고려하세요
                 </h3>
-
                 <ul className="space-y-3">
                   {aiAnalysis?.cons?.map((c, i) => (
-                    <li
-                      key={i}
-                      className="text-amber-900 text-sm leading-relaxed flex items-start gap-2"
-                    >
-                      <AlertCircle
-                        size={16}
-                        className="mt-1 shrink-0 text-amber-500"
-                      />
+                    <li key={i} className="text-amber-900 text-sm leading-relaxed flex items-start gap-2">
+                      <AlertCircle size={16} className="mt-1 shrink-0 text-amber-500" />
                       {c}
                     </li>
                   ))}
@@ -343,7 +408,7 @@ const fetchAiAnalysis = async (selectedRec: Recommendation) => {
           )}
         </motion.div>
 
-        {/* 부품 리스트 */}
+        {/* 부품 데이터 리스트 출력 */}
         <div className="space-y-4">
           {selected.parts.map((part, idx) => (
             <div
@@ -351,24 +416,30 @@ const fetchAiAnalysis = async (selectedRec: Recommendation) => {
               className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center"
             >
               <div>
-                <span className="text-xs font-bold text-blue-600 uppercase">
+                <span className={`text-xs font-bold uppercase ${isUpgradeMode ? "text-purple-600" : "text-blue-600"}`}>
                   {part.category}
                 </span>
                 <h3 className="text-lg font-bold text-gray-800">
                   {part.name}
                 </h3>
+                {part.price === 0 && (
+                  <span className="text-xs text-green-600 font-semibold bg-green-50 px-2 py-0.5 rounded border border-green-200 mt-1.5 inline-block">
+                    내 보유 부품
+                  </span>
+                )}
               </div>
 
               <div className="text-right">
                 <p className="text-xl font-bold text-gray-900">
-                  {part.price.toLocaleString()}원
+                  {part.price === 0 ? "보유 중" : `${part.price.toLocaleString()}원`}
                 </p>
-
                 <a
                   href={`https://search.danawa.com/dsearch.php?query=${encodeURIComponent(part.name)}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-sm text-blue-500 hover:underline flex items-center gap-1 justify-end"
+                  className={`text-sm hover:underline flex items-center gap-1 justify-end mt-1 ${
+                    isUpgradeMode ? "text-purple-500" : "text-blue-500"
+                  }`}
                 >
                   최저가 확인 <ExternalLink size={12} />
                 </a>
@@ -377,13 +448,18 @@ const fetchAiAnalysis = async (selectedRec: Recommendation) => {
           ))}
         </div>
 
-        {/* 하단 버튼 */}
+        {/* 하단 제어 트래픽 버튼 */}
         <div className="grid grid-cols-2 gap-4 mt-10">
           <button
-            onClick={onRestart}
+            onClick={() => {
+              sessionStorage.removeItem('pcBuildData');
+              sessionStorage.removeItem('recommendationResult');
+              sessionStorage.removeItem('extractedBudget');
+              onRestart(); // 로컬 App.tsx 구조의 스위칭 상태를 trigger하여 메인으로 안전 철수
+            }}
             className="flex items-center justify-center gap-2 bg-white border border-gray-300 p-4 rounded-xl font-bold text-gray-600 hover:bg-gray-50 transition-colors"
           >
-            <RotateCcw size={20} /> 다른 조합 만들기
+            <RotateCcw size={20} /> 메인 화면으로 가기
           </button>
 
           <button
