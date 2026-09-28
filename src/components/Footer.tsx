@@ -10,7 +10,6 @@ export function Footer() {
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-white font-black text-lg tracking-tight">
             <span>PickPC</span>
-            <span className="text-xs font-bold text-blue-500 bg-blue-950 px-2 py-0.5 rounded border border-blue-900">Beta</span>
           </div>
           <p className="text-xs text-slate-500 max-w-sm leading-relaxed">
             Pusan National University IT Applied Engineering <br />

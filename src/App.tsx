@@ -28,16 +28,14 @@ const App: React.FC = () => {
   };
 
   return (
-    // 🚀 푸터가 항상 하단에 고정되도록 세로 정렬 및 최소 높이 스타일 레이아웃 반영
-    <div className="app-container flex flex-col min-h-screen justify-between">
-      
-      {/* 메인 콘텐츠 영역 (상단 공간을 가득 채우도록 flex-1 설정) */}
+    <div className="app-container flex flex-col min-h-screen justify-between relative">
       <div className="flex-1">
         {screen === 'start' && <SplashScreen />}
         
         {screen === 'main' && (
           <MainPage 
-            onStart={() => setScreen('input')} 
+            onStart={() => { setInputMode('manual'); setScreen('input'); }} 
+            onAiStart={() => { setInputMode('ai'); setScreen('input'); }}
             onOwnedStart={() => setScreen('owned-input')} 
             onDbStart={() => setScreen('db-list')} 
             onGuide={() => setScreen('guide')} 
@@ -87,7 +85,7 @@ const App: React.FC = () => {
               </div>
 
               {inputMode === 'manual' ? (
-                <InputForm onComplete={handleComplete} onBack={() => setScreen('main')} />
+                <InputForm onComplete={handleComplete} />
               ) : (
                 <NaturalInputForm onComplete={handleComplete} />
               )}
@@ -95,7 +93,7 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* 화면 2: 신규 기존 부품 활용 업그레이드 견적 화면 */}
+        {/* 화면 2: 기존 부품 활용 견적 화면 */}
         {screen === 'owned-input' && (
           <div className="min-h-screen bg-slate-50 flex flex-col">
             <div className="bg-white/80 backdrop-blur-md border-b sticky top-0 z-10 shadow-sm">
@@ -119,7 +117,7 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* 화면 3: 신규 하드웨어 데이터베이스 & 벤치마크 인덱스 목록 화면 */}
+        {/* 화면 3: 하드웨어 DB & 벤치마크 화면 */}
         {screen === 'db-list' && (
           <div className="min-h-screen bg-slate-50 flex flex-col">
             <div className="bg-white/80 backdrop-blur-md border-b sticky top-0 z-10 shadow-sm">
@@ -155,9 +153,8 @@ const App: React.FC = () => {
         )}
       </div>
 
-      {/*전역 공통 푸터 배치 (진입 스플래시 및 로딩 연산 스크린 단계에서는 가독성을 위해 차단) */}
+      {/* 전역 푸터 */}
       {screen !== 'start' && screen !== 'loading' && <Footer />}
-      
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { DollarSign, Target, ChevronRight, Check } from 'lucide-react'; // ArrowLeft, Cpu 제거
+import { DollarSign, Target, ChevronRight, Check, Sparkles, Gauge } from 'lucide-react';
 
 const usageOptions = [
   { value: 'GAMING', label: '게이밍', emoji: '🎮', desc: '고사양 게임 플레이' },
@@ -36,6 +36,19 @@ function formatKoreanBudget(value: number): string {
   return parts.join(' ') + '원';
 }
 
+// 예산 구간별 성능 등급 판별 헬퍼
+function getBudgetTier(value: number) {
+  if (value < 600000) {
+    return { label: '🟢 사무 / 인강 / 웹서핑 최적', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' };
+  } else if (value < 1200000) {
+    return { label: '🔵 롤 / 오버워치 / FHD 일반 게이밍', color: 'bg-blue-100 text-blue-800 border-blue-200' };
+  } else if (value < 1900000) {
+    return { label: '🟣 배틀그라운드 144Hz / 4K 영상편집', color: 'bg-purple-100 text-purple-800 border-purple-200' };
+  } else {
+    return { label: '🔴 하이엔드 4K 게이밍 / AI 딥러닝', color: 'bg-rose-100 text-rose-800 border-rose-200' };
+  }
+}
+
 export function InputForm({ onComplete }: { onComplete: () => void }) {
   const [budget, setBudget] = useState('');
   const [purpose, setPurpose] = useState('');
@@ -56,6 +69,9 @@ export function InputForm({ onComplete }: { onComplete: () => void }) {
   const toggleBrand = (brandId: string) => {
     setBrands(prev => ({ ...prev, [brandId]: !prev[brandId] }));
   };
+
+  const numericBudget = parseInt(budget || '0');
+  const budgetTier = getBudgetTier(numericBudget);
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -91,25 +107,34 @@ export function InputForm({ onComplete }: { onComplete: () => void }) {
                 <p className="text-sm text-gray-600">총 예산을 입력해주세요</p>
               </div>
             </div>
-            <div className="relative">
+
+            <div className="relative mb-3">
               <input
                 type="number"
                 value={budget}
                 onChange={(e) => setBudget(e.target.value)}
-                placeholder="1000000"
+                placeholder="1500000"
                 required
                 className="w-full px-5 py-4 pr-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-lg transition-all font-medium"
               />
               <span className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-500 font-bold">원</span>
             </div>
-            {budget && parseInt(budget) > 0 && (
-              <motion.p
-                initial={{ opacity: 0, y: -10 }}
+
+            {/* 초보자용 예산 체감 가이드 레벨 뱃지 */}
+            {numericBudget > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-3 text-sm text-gray-600"
+                className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
               >
-                약 <span className="text-blue-600 font-bold">{formatKoreanBudget(parseInt(budget))}</span> 예산으로 추천해드립니다
-              </motion.p>
+                <div className="text-sm text-gray-600">
+                  약 <span className="text-blue-600 font-bold">{formatKoreanBudget(numericBudget)}</span> 예산 수준
+                </div>
+                <div className={`px-3 py-1.5 rounded-lg border font-bold text-xs flex items-center gap-1.5 w-fit ${budgetTier.color}`}>
+                  <Gauge size={14} />
+                  {budgetTier.label}
+                </div>
+              </motion.div>
             )}
           </label>
         </div>
